@@ -40,14 +40,14 @@ typedef NS_ENUM(NSUInteger, RSKImageCropMode) {
 
 /**
  Designated initializer. Initializes and returns a newly allocated view controller object with the specified image.
- 
+
  @param originalImage The image for cropping.
  */
 - (instancetype)initWithImage:(UIImage *)originalImage;
 
 /**
  Initializes and returns a newly allocated view controller object with the specified image and the specified crop mode.
- 
+
  @param originalImage The image for cropping.
  @param cropMode The mode for cropping.
  */
@@ -59,14 +59,14 @@ typedef NS_ENUM(NSUInteger, RSKImageCropMode) {
 
 /**
  The receiver's delegate.
- 
+
  @discussion A `RSKImageCropViewControllerDelegate` delegate responds to messages sent by completing / canceling crop the image in the image crop view controller.
  */
 @property (weak, nonatomic) id<RSKImageCropViewControllerDelegate> delegate;
 
 /**
  The receiver's data source.
- 
+
  @discussion A `RSKImageCropViewControllerDataSource` data source provides a custom rect and a custom path for the mask.
  */
 @property (weak, nonatomic) id<RSKImageCropViewControllerDataSource> dataSource;
@@ -91,14 +91,14 @@ typedef NS_ENUM(NSUInteger, RSKImageCropMode) {
 
 /**
  The rect of the mask.
- 
+
  @discussion Updating each time before the crop view lays out its subviews.
  */
 @property (assign, readonly, nonatomic) CGRect maskRect;
 
 /**
  The path of the mask.
- 
+
  @discussion Updating each time before the crop view lays out its subviews.
  */
 @property (strong, readonly, nonatomic) UIBezierPath *maskPath;
@@ -112,24 +112,11 @@ typedef NS_ENUM(NSUInteger, RSKImageCropMode) {
  */
 @property (assign, nonatomic) RSKImageCropMode cropMode;
 
-/// -------------------------------
-/// @name Accessing the UI Elements
-/// -------------------------------
-
 /**
- The Title Label.
+ The value for setting the scale rate.
+ default is originalImage size rate.
  */
-@property (strong, nonatomic, readonly) UILabel *moveAndScaleLabel;
-
-/**
- The Cancel Button.
- */
-@property (strong, nonatomic, readonly) UIButton *cancelButton;
-
-/**
- The Choose Button.
- */
-@property (strong, nonatomic, readonly) UIButton *chooseButton;
+@property (assign, nonatomic) CGFloat zoomScale;
 
 /// -------------------------------------------
 /// @name Checking of the Interface Orientation
@@ -137,7 +124,7 @@ typedef NS_ENUM(NSUInteger, RSKImageCropMode) {
 
 /**
  Returns a Boolean value indicating whether the user interface is currently presented in a portrait orientation.
- 
+
  @return YES if the interface orientation is portrait, otherwise returns NO.
  */
 - (BOOL)isPortraitInterfaceOrientation;
@@ -151,22 +138,22 @@ typedef NS_ENUM(NSUInteger, RSKImageCropMode) {
 
 /**
  Asks the data source a custom rect for the mask.
- 
+
  @param controller The crop view controller object to whom a rect is provided.
- 
+
  @return A custom rect for the mask.
- 
+
  @discussion Only valid if `cropMode` is `RSKImageCropModeCustom`.
  */
 - (CGRect)imageCropViewControllerCustomMaskRect:(RSKImageCropViewController *)controller;
 
 /**
  Asks the data source a custom path for the mask.
- 
+
  @param controller The crop view controller object to whom a path is provided.
- 
+
  @return A custom path for the mask.
- 
+
  @discussion Only valid if `cropMode` is `RSKImageCropModeCustom`.
  */
 - (UIBezierPath *)imageCropViewControllerCustomMaskPath:(RSKImageCropViewController *)controller;

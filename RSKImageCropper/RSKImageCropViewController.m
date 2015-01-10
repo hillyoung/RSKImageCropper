@@ -54,6 +54,8 @@ static const CGFloat kLandscapeCancelAndChooseButtonsVerticalMargin = 12.0f;
 @property (strong, nonatomic) UIButton *chooseButton;
 
 @property (strong, nonatomic) UITapGestureRecognizer *doubleTapGestureRecognizer;
+//add by Yang Xiaoshan
+@property (strong, nonatomic) UIRotationGestureRecognizer *rotationGestureRecognizer;
 
 @property (assign, nonatomic) BOOL didSetupConstraints;
 @property (strong, nonatomic) NSLayoutConstraint *moveAndScaleLabelTopConstraint;
@@ -89,31 +91,35 @@ static const CGFloat kLandscapeCancelAndChooseButtonsVerticalMargin = 12.0f;
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    
+
     if ([self respondsToSelector:@selector(edgesForExtendedLayout)]) {
         self.edgesForExtendedLayout = UIRectEdgeNone;
         self.automaticallyAdjustsScrollViewInsets = NO;
     }
-    
+
     self.view.backgroundColor = [UIColor blackColor];
     self.view.clipsToBounds = YES;
-    
+
     [self.view addSubview:self.imageScrollView];
     [self.view addSubview:self.overlayView];
     [self.view addSubview:self.moveAndScaleLabel];
     [self.view addSubview:self.cancelButton];
     [self.view addSubview:self.chooseButton];
-    
+
     [self.view addGestureRecognizer:self.doubleTapGestureRecognizer];
+    // Add by Yang Xiaoshan
+    if (self.cropMode == RSKImageCropModeSquare) {
+        [self.imageScrollView addGestureRecognizer:self.rotationGestureRecognizer];
+    }
 }
 
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    
+
     self.originalStatusBarHidden = [UIApplication sharedApplication].statusBarHidden;
     [[UIApplication sharedApplication] setStatusBarHidden:YES];
-    
+
     self.originalNavigationControllerNavigationBarHidden = self.navigationController.navigationBarHidden;
     [self.navigationController setNavigationBarHidden:YES animated:NO];
 }
@@ -121,7 +127,7 @@ static const CGFloat kLandscapeCancelAndChooseButtonsVerticalMargin = 12.0f;
 - (void)viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
-    
+
     self.originalNavigationControllerViewBackgroundColor = self.navigationController.view.backgroundColor;
     self.navigationController.view.backgroundColor = [UIColor blackColor];
 }
@@ -129,7 +135,7 @@ static const CGFloat kLandscapeCancelAndChooseButtonsVerticalMargin = 12.0f;
 - (void)viewWillDisappear:(BOOL)animated
 {
     [super viewWillDisappear:animated];
-    
+
     [[UIApplication sharedApplication] setStatusBarHidden:self.originalStatusBarHidden];
     [self.navigationController setNavigationBarHidden:self.originalNavigationControllerNavigationBarHidden animated:animated];
     self.navigationController.view.backgroundColor = self.originalNavigationControllerViewBackgroundColor;
@@ -138,7 +144,7 @@ static const CGFloat kLandscapeCancelAndChooseButtonsVerticalMargin = 12.0f;
 - (void)viewWillLayoutSubviews
 {
     [super viewWillLayoutSubviews];
-    
+
     [self updateMaskRect];
     [self layoutImageScrollView];
     [self layoutOverlayView];
@@ -149,7 +155,7 @@ static const CGFloat kLandscapeCancelAndChooseButtonsVerticalMargin = 12.0f;
 - (void)viewDidLayoutSubviews
 {
     [super viewDidLayoutSubviews];
-    
+
     if (!self.imageScrollView.zoomView) {
         [self displayImage];
     }
@@ -158,55 +164,55 @@ static const CGFloat kLandscapeCancelAndChooseButtonsVerticalMargin = 12.0f;
 - (void)updateViewConstraints
 {
     [super updateViewConstraints];
-    
+
     if (!self.didSetupConstraints) {
         // ---------------------------
         // The label "Move and Scale".
         // ---------------------------
-        
+
         NSLayoutConstraint *constraint = [NSLayoutConstraint constraintWithItem:self.moveAndScaleLabel attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual
                                                                          toItem:self.view attribute:NSLayoutAttributeCenterX multiplier:1.0f
                                                                        constant:0.0f];
         [self.view addConstraint:constraint];
-        
+
         CGFloat constant = kPortraitMoveAndScaleLabelVerticalMargin;
         self.moveAndScaleLabelTopConstraint = [NSLayoutConstraint constraintWithItem:self.moveAndScaleLabel attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual
                                                                               toItem:self.view attribute:NSLayoutAttributeTop multiplier:1.0f
                                                                             constant:constant];
         [self.view addConstraint:self.moveAndScaleLabelTopConstraint];
-        
+
         // --------------------
         // The button "Cancel".
         // --------------------
-        
+
         constant = kPortraitCancelAndChooseButtonsHorizontalMargin;
         constraint = [NSLayoutConstraint constraintWithItem:self.cancelButton attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationEqual
                                                      toItem:self.view attribute:NSLayoutAttributeLeft multiplier:1.0f
                                                    constant:constant];
         [self.view addConstraint:constraint];
-        
+
         constant = -kPortraitCancelAndChooseButtonsVerticalMargin;
         self.cancelButtonBottomConstraint = [NSLayoutConstraint constraintWithItem:self.cancelButton attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual
                                                                             toItem:self.view attribute:NSLayoutAttributeBottom multiplier:1.0f
                                                                           constant:constant];
         [self.view addConstraint:self.cancelButtonBottomConstraint];
-        
+
         // --------------------
         // The button "Choose".
         // --------------------
-        
+
         constant = -kPortraitCancelAndChooseButtonsHorizontalMargin;
         constraint = [NSLayoutConstraint constraintWithItem:self.chooseButton attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual
                                                      toItem:self.view attribute:NSLayoutAttributeRight multiplier:1.0f
                                                    constant:constant];
         [self.view addConstraint:constraint];
-        
+
         constant = -kPortraitCancelAndChooseButtonsVerticalMargin;
         self.chooseButtonBottomConstraint = [NSLayoutConstraint constraintWithItem:self.chooseButton attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual
                                                                             toItem:self.view attribute:NSLayoutAttributeBottom multiplier:1.0f
                                                                           constant:constant];
         [self.view addConstraint:self.chooseButtonBottomConstraint];
-        
+
         self.didSetupConstraints = YES;
     } else {
         if ([self isPortraitInterfaceOrientation]) {
@@ -307,6 +313,16 @@ static const CGFloat kLandscapeCancelAndChooseButtonsVerticalMargin = 12.0f;
     return _doubleTapGestureRecognizer;
 }
 
+// Add by Yang Xiaoshan
+- (UIRotationGestureRecognizer *)rotationGestureRecognizer {
+    if (!_rotationGestureRecognizer) {
+        _rotationGestureRecognizer = [[UIRotationGestureRecognizer alloc] initWithTarget:self action:@selector(rotateView:)];
+        _rotationGestureRecognizer.delaysTouchesEnded = NO;
+    }
+    return _rotationGestureRecognizer;
+}
+
+
 - (void)setOriginalImage:(UIImage *)originalImage
 {
     if (![_originalImage isEqual:originalImage]) {
@@ -321,18 +337,31 @@ static const CGFloat kLandscapeCancelAndChooseButtonsVerticalMargin = 12.0f;
 {
     if (![_maskPath isEqual:maskPath]) {
         _maskPath = maskPath;
-        
+
         UIBezierPath *clipPath = [UIBezierPath bezierPathWithRect:self.overlayView.frame];
         [clipPath appendPath:maskPath];
         clipPath.usesEvenOddFillRule = YES;
-        
+
         CABasicAnimation *pathAnimation = [CABasicAnimation animationWithKeyPath:@"path"];
         pathAnimation.duration = [CATransaction animationDuration];
         pathAnimation.timingFunction = [CATransaction animationTimingFunction];
         [self.maskLayer addAnimation:pathAnimation forKey:@"path"];
-        
+
         self.maskLayer.path = [clipPath CGPath];
     }
+}
+
+// Add by Yang Xiaoshan
+- (CGFloat)zoomScale {
+    if (_zoomScale == 0.0) {
+        CGSize size = self.originalImage.size;
+        if (size.width > size.height) {
+            return size.height / size.width;
+        } else {
+            return size.width / size.height;
+        }
+    }
+    return _zoomScale;
 }
 
 #pragma mark - Action handling
@@ -351,6 +380,11 @@ static const CGFloat kLandscapeCancelAndChooseButtonsVerticalMargin = 12.0f;
 {
     [self resetZoomScale:YES];
     [self resetContentOffset:YES];
+}
+
+// Add by Yang Xiaoshan
+- (void)rotateView:(UIRotationGestureRecognizer *)rotation {
+    _imageScrollView.transform = CGAffineTransformRotate(_imageScrollView.transform, rotation.rotation*M_PI/180);
 }
 
 #pragma mark - Private
@@ -375,7 +409,7 @@ static const CGFloat kLandscapeCancelAndChooseButtonsVerticalMargin = 12.0f;
 {
     CGSize boundsSize = self.imageScrollView.bounds.size;
     CGRect frameToCenter = self.imageScrollView.zoomView.frame;
-    
+
     CGPoint contentOffset;
     if (CGRectGetWidth(frameToCenter) > boundsSize.width) {
         contentOffset.x = (CGRectGetWidth(frameToCenter) - boundsSize.width) * 0.5f;
@@ -387,7 +421,7 @@ static const CGFloat kLandscapeCancelAndChooseButtonsVerticalMargin = 12.0f;
     } else {
         contentOffset.y = 0;
     }
-    
+
     [self.imageScrollView setContentOffset:contentOffset animated:animated];
 }
 
@@ -403,6 +437,8 @@ static const CGFloat kLandscapeCancelAndChooseButtonsVerticalMargin = 12.0f;
 - (void)layoutImageScrollView
 {
     self.imageScrollView.frame = self.maskRect;
+    // Add by Yang Xiaoshan
+    self.imageScrollView.zoomScale = self.zoomScale;
 }
 
 - (void)layoutOverlayView
@@ -417,16 +453,16 @@ static const CGFloat kLandscapeCancelAndChooseButtonsVerticalMargin = 12.0f;
         case RSKImageCropModeCircle: {
             CGFloat viewWidth = CGRectGetWidth(self.view.frame);
             CGFloat viewHeight = CGRectGetHeight(self.view.frame);
-            
+
             CGFloat diameter;
             if ([self isPortraitInterfaceOrientation]) {
                 diameter = MIN(viewWidth, viewHeight) - kPortraitCircleMaskRectInnerEdgeInset * 2;
             } else {
                 diameter = MIN(viewWidth, viewHeight) - kLandscapeCircleMaskRectInnerEdgeInset * 2;
             }
-            
+
             CGSize maskSize = CGSizeMake(diameter, diameter);
-            
+
             self.maskRect = CGRectMake((viewWidth - maskSize.width) * 0.5f,
                                        (viewHeight - maskSize.height) * 0.5f,
                                        maskSize.width,
@@ -436,16 +472,16 @@ static const CGFloat kLandscapeCancelAndChooseButtonsVerticalMargin = 12.0f;
         case RSKImageCropModeSquare: {
             CGFloat viewWidth = CGRectGetWidth(self.view.frame);
             CGFloat viewHeight = CGRectGetHeight(self.view.frame);
-            
+
             CGFloat length;
             if ([self isPortraitInterfaceOrientation]) {
                 length = MIN(viewWidth, viewHeight) - kPortraitSquareMaskRectInnerEdgeInset * 2;
             } else {
                 length = MIN(viewWidth, viewHeight) - kLandscapeSquareMaskRectInnerEdgeInset * 2;
             }
-            
+
             CGSize maskSize = CGSizeMake(length, length);
-            
+
             self.maskRect = CGRectMake((viewWidth - maskSize.width) * 0.5f,
                                        (viewHeight - maskSize.height) * 0.5f,
                                        maskSize.width,
@@ -489,18 +525,18 @@ static const CGFloat kLandscapeCancelAndChooseButtonsVerticalMargin = 12.0f;
 {
     CGRect cropRect = CGRectZero;
     float zoomScale = 1.0 / self.imageScrollView.zoomScale;
-    
+
     cropRect.origin.x = self.imageScrollView.contentOffset.x * zoomScale;
     cropRect.origin.y = self.imageScrollView.contentOffset.y * zoomScale;
     cropRect.size.width = CGRectGetWidth(self.imageScrollView.bounds) * zoomScale;
     cropRect.size.height = CGRectGetHeight(self.imageScrollView.bounds) * zoomScale;
-    
+
     CGSize imageSize = self.originalImage.size;
     CGFloat x = CGRectGetMinX(cropRect);
     CGFloat y = CGRectGetMinY(cropRect);
     CGFloat width = CGRectGetWidth(cropRect);
     CGFloat height = CGRectGetHeight(cropRect);
-    
+
     UIImageOrientation imageOrientation = self.originalImage.imageOrientation;
     if (imageOrientation == UIImageOrientationRight || imageOrientation == UIImageOrientationRightMirrored) {
         cropRect.origin.x = y;
@@ -516,16 +552,38 @@ static const CGFloat kLandscapeCancelAndChooseButtonsVerticalMargin = 12.0f;
         cropRect.origin.x = imageSize.width - CGRectGetWidth(cropRect) - x;;
         cropRect.origin.y = imageSize.height - CGRectGetHeight(cropRect) - y;
     }
-    
+
     return cropRect;
 }
 
 - (UIImage *)croppedImage:(UIImage *)image cropRect:(CGRect)cropRect
 {
-    CGImageRef croppedCGImage = CGImageCreateWithImageInRect(image.CGImage, cropRect);
-    UIImage *croppedImage = [UIImage imageWithCGImage:croppedCGImage scale:1.0f orientation:image.imageOrientation];
-    CGImageRelease(croppedCGImage);
-    return [croppedImage fixOrientation];
+    // Add by Yang Xiaoshan
+    if (self.cropMode == RSKImageCropModeSquare) {
+        CGFloat squareWidth = 320;
+        CGFloat rectOriginX = (self.view.frame.size.width - squareWidth)/2;
+        CGFloat rectOriginY = (self.view.frame.size.height - squareWidth)/2;
+        CGRect rect = CGRectMake(rectOriginX, rectOriginY, squareWidth, squareWidth);
+
+        UIGraphicsBeginImageContext(self.view.bounds.size);
+        CGContextRef context = UIGraphicsGetCurrentContext();
+        CGContextSaveGState(context);
+        UIRectClip(rect);
+        [self.view.layer renderInContext:context];
+        UIImage *theImage = UIGraphicsGetImageFromCurrentImageContext();
+        UIGraphicsEndImageContext();
+
+        CGImageRef cropCGImage = CGImageCreateWithImageInRect(theImage.CGImage, rect);
+        UIImage *cropImage = [UIImage imageWithCGImage:cropCGImage];
+        CGImageRelease(cropCGImage);
+
+        return cropImage;
+    } else {
+        CGImageRef croppedCGImage = CGImageCreateWithImageInRect(image.CGImage, cropRect);
+        UIImage *croppedImage = [UIImage imageWithCGImage:croppedCGImage scale:1.0f orientation:image.imageOrientation];
+        CGImageRelease(croppedCGImage);
+        return [croppedImage fixOrientation];
+    }
 }
 
 - (void)cropImage
