@@ -560,7 +560,7 @@ static const CGFloat kLandscapeCancelAndChooseButtonsVerticalMargin = 12.0f;
 {
     // Add by Yang Xiaoshan
     if (self.cropMode == RSKImageCropModeSquare) {
-        CGFloat squareWidth = 320;
+        CGFloat squareWidth = self.maskRect.size.width;
         CGFloat rectOriginX = (self.view.frame.size.width - squareWidth)/2;
         CGFloat rectOriginY = (self.view.frame.size.height - squareWidth)/2;
         CGRect rect = CGRectMake(rectOriginX, rectOriginY, squareWidth, squareWidth);
