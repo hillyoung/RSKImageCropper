@@ -38,7 +38,7 @@ static const CGFloat kLandscapeSquareMaskRectInnerEdgeInset = 45.0f;
 static const CGFloat kLandscapeMoveAndScaleLabelVerticalMargin = 12.0f;
 static const CGFloat kLandscapeCancelAndChooseButtonsVerticalMargin = 12.0f;
 
-@interface RSKImageCropViewController ()
+@interface RSKImageCropViewController ()<UIGestureRecognizerDelegate>
 
 @property (strong, nonatomic) UIColor *originalNavigationControllerViewBackgroundColor;
 @property (assign, nonatomic) BOOL originalNavigationControllerNavigationBarHidden;
@@ -318,6 +318,7 @@ static const CGFloat kLandscapeCancelAndChooseButtonsVerticalMargin = 12.0f;
     if (!_rotationGestureRecognizer) {
         _rotationGestureRecognizer = [[UIRotationGestureRecognizer alloc] initWithTarget:self action:@selector(rotateView:)];
         _rotationGestureRecognizer.delaysTouchesEnded = NO;
+        _rotationGestureRecognizer.delegate = self;
     }
     return _rotationGestureRecognizer;
 }
@@ -603,6 +604,12 @@ static const CGFloat kLandscapeCancelAndChooseButtonsVerticalMargin = 12.0f;
     if ([self.delegate respondsToSelector:@selector(imageCropViewControllerDidCancelCrop:)]) {
         [self.delegate imageCropViewControllerDidCancelCrop:self];
     }
+}
+
+#pragma mark - UIGestureRecognizerDelegate
+
+-(BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
+    return YES;
 }
 
 @end
